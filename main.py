@@ -11,9 +11,13 @@ sh = 720
 
 playerShip = pygame.image.load("Playership.png")
 asteroids = pygame.image.load("asteroid.png")
+smallAsteroids = pygame.transform.scale(pygame.image.load("asteroid.png"),(random.randint(35,50),random.randint(35,50)))
+midAsteroids = pygame.transform.scale(pygame.image.load("asteroid.png"),(random.randint(90,100),random.randint(90,100)))
+bigAsteroids = pygame.transform.scale(pygame.image.load("asteroid.png"),(random.randint(130,150),random.randint(130,150)))
 enemyShip = pygame.image.load("enemt ship.png")
 laser = pygame.transform.scale(pygame.image.load("laser.png"),(70,60))
 bg = pygame.image.load("background.png")
+
 #click = mixer.music.load("click.mp3")
 
 player_mask = pygame.mask.from_surface(playerShip)
@@ -30,9 +34,10 @@ gameover = False
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, health = 5):
-        pygame.sprite.Sprite.__init__(self)
+        super(Player, self).__init__()
         self.x = x
         self.y = y
+        self.rect = playerShip.get_rect()
         self.image = playerShip
         self.laser = laser
         self.health = health
@@ -79,7 +84,7 @@ class Player(pygame.sprite.Sprite):
         
 class Enemy(Player):
     def __init__(self, x, y,  health = 3):
-        pygame.sprite.Sprite.__init__(self)
+        super(Enemy, self).__init__(x, y)
         self.image = enemyShip
         self.x = x
         self.y = y
@@ -100,23 +105,21 @@ class Enemy(Player):
             self.velocityX = self.velocityX * -1
         if self.x == 746 or self.x == 747 or self.x == 748 or self.x == 749 or self.x == 750:
             self.velocityX = self.velocityX * -1
-
-    def xCoordinate(self):
-        return self.x
-                
-    def yCoordinate(self):
-        return self.y
     
     def draw(self):
         if self.y < sh or  self.health == 0:
             self.alive == False
             if self.alive:
                 screen.blit(enemyShip, (self.x, self.y))
+                
+
                  
 class Bullet():
     def __init__(self, x, y):
         self.x = x + 50
         self.y = y - 10
+        self.w = laser.get_width()
+        self.h = laser.get_height()
         self.image = laser
         self.rect = self.image.get_rect(center = (35,30))
         self.mask = pygame.mask.from_surface(self.image)
@@ -128,23 +131,30 @@ class Bullet():
     def bulletState(self):
         return (self.y < -100)
 
-    def collision(self):
-        self.hits = pygame.sprite.spritecollide(self, eA, False)
-        if self.hits:
-            print("collide ")
     
     def draw(self):
         screen.blit(self.image, (self.x, self.y))
                 #pygame.time.delay(1) slow downs time potential power up
+
                 
 class Asteroids(Enemy):
     def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
         self.image = asteroids
+        self.w = asteroids.get_width()
+        self.h = asteroids.get_height()
         self.x = x
         self. y = y
         self.alive = True
         self.direction = random.randint(0,1)
+        
+    def big(self, size):
+        self.size = size
+        if self.size == 1:
+            self.image = smallAsteroids
+        if self.size == 2:
+            self.image = midAsteroids
+        if self.size == 3:
+            self.image = bigAsteroids
         
     def boundaries(self):
         if self.y > sh or self.y < 0:
@@ -168,27 +178,23 @@ class Asteroids(Enemy):
  
 player = Player(sw//2, sh//2)
 enemy = Enemy(random.randint(100,750), random.randint(-50,-40)) 
-asteroidsScreen = Asteroids(500,0)
+asteroid = Asteroids(500,0)
 enemies= []
+asteroids = []
+count = 0
 enemies.append(enemy)
      
-
+Esprites = pygame.sprite.Group()
+Asprites = pygame.sprite.Group()
 allSprites = pygame.sprite.Group()
-eA = pygame.sprite.Group()
-eAS = pygame.sprite.Group()
-B = pygame.sprite.Group()
-P = pygame.sprite.Group()
-
-
-for i in range(6):
-    eA.add(enemy)
-    allSprites.add(enemy)
-allSprites.add(player)     
-     
+allSprites.add(player)
 
 def redrawScreen():
     screen.blit(bg, (0,0))
     
+    for a in asteroids:
+        a.draw(screen)
+        a.move()
         
     for enemy in enemies:
         enemy.draw()
@@ -198,39 +204,35 @@ def redrawScreen():
     keys = pygame.key.get_pressed()
     player.move(keys)
     player.shoot(keys)
-    asteroidsScreen.draw()
-    asteroidsScreen.move()
+    asteroid.draw()
+    asteroid.move()
     for bullet in player.bullets:
-        bullet.collision()
         bullet.draw()
         
     pygame.display.update()
     
 
-def game():
-    global bg
-    clock.tick(60)
-    run = True
-    while run:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-            
-        screen.blit(bg, (0,0))
+
+clock.tick(30)
+count += 1
+run = True
+while run:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+                
+    if count % 50 == 0:
+        ran = random.choice([1,1,1,2,3,3])
+        asteroids.append(Asteroids(ran))
+    
+    player_center = playerShip.get_rect
+     
         
-        if not enemy.alive():
-            enemy = Enemy(random.randint(100,750), random.randint(-50,-40)) 
+    screen.blit(bg, (0,0))
         
-        for i, inst in enumerate(eA):
-            if inst.rect.y >= (sh - 50):
-                score += 1
-                inst.kill()
-                enemy = Enemy(random.randint(100,750), random.randint(-50,-40)) 
-                eA.add(enemy)
-                allSprites.add(enemy)
-        allSprites.draw(screen)
-        allSprites.update()  
         
-        redrawScreen()
         
-game()
+    redrawScreen()
+        
+
+
